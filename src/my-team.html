@@ -1,0 +1,82 @@
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<dom-module id="my-view2">
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding: 10px;
+            }
+
+            .card {
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+                padding: 16px;
+                margin: 24px;
+                border-radius: 5px;
+                background-color: #fff;
+                color: #757575;
+            }
+
+            .header {
+                display: inline-block;
+                height: 54px;
+                width: 124px;
+                border-radius: 3%;
+                line-height: 54px;
+                font-size: 30px;
+                color: #555;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 22px;
+                margin: 16px 0;
+                color: #212121;
+            }
+        </style>
+        <div class="card">
+            <div class="header">My Team</div>
+            <paper-listbox id="lstProjects" selected="0">
+            </paper-listbox>
+        </div>
+    </template>
+    <script>
+
+    Polymer({
+
+        is: 'my-view2',
+        ready: function () {
+
+            //Get elements
+            const lstProjects = this.$.lstProjects;
+            const spinner = this.$.spinner;
+
+            firebase.auth().onAuthStateChanged(user => {
+                if (user) {
+                    var serverDate = new Date();
+                    var email = firebase.auth().currentUser.email;
+                    var ref = firebase.database().ref('/teammembers/' + serverDate.getUTCDate());
+                    var project = ref.orderByChild('member')
+                                    .startAt(email).endAt(email)
+                    .once('value', t => {
+                        t.forEach(p => {
+                            ref = firebase.database().ref('/teammembers/' + serverDate.getUTCDate());
+                            ref.orderByChild('project')
+                                .startAt(p.val().project).endAt(p.val().project)
+                                .on('child_added', e => {
+                                    const i = document.createElement('paper-item');
+                                    i.appendChild(document.createTextNode(e.val().member))
+                                    lstProjects.appendChild(i);
+                                });
+                        });
+                    })
+                }
+            });
+        }
+
+    });
+
+    </script>
+</dom-module>

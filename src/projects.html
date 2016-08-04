@@ -1,0 +1,122 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+<dom-module id="my-view4">
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding: 10px;
+            }
+
+            .card {
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+                padding: 16px;
+                margin: 24px;
+                border-radius: 5px;
+                background-color: #fff;
+                color: #757575;
+            }
+
+            .header {
+                display: inline-block;
+                height: 54px;
+                width: 94px;
+                border-radius: 3%;
+                line-height: 54px;
+                font-size: 30px;
+                color: #555;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 22px;
+                margin: 16px 0;
+                color: #212121;
+            }
+
+            .horizontal-section {
+                padding: 0 !important;
+            }
+
+           
+            .sublist {
+                padding-left: 20px;
+                padding-right: 20px;
+            }
+            .hide{
+                display: none;
+            }
+        </style>
+        <div class="card">
+            <div class="header">Projects</div>
+            <paper-input id="txtProjectName" label="Project Name" required auto-validate error-message="needs some text!"></paper-input>
+            <paper-button id="icoAdd" raised><iron-icon icon="icons:add-circle"></iron-icon>Add Project</paper-button>
+            <div>
+                <div class="horizontal-section">
+                    <paper-listbox id="lstProjects" selected="0">
+                    </paper-listbox>
+                </div>
+                <paper-spinner id="spinner" active></paper-spinner>
+            </div>
+            
+        </div>
+    </template>
+    <script>
+
+    Polymer({
+
+      is: 'my-view4',
+      ready: function () {
+
+          //Get elements
+          const txtProjectName = this.$.txtProjectName;
+          const icoAdd = this.$.icoAdd;
+          const lstProjects = this.$.lstProjects;
+          const spinner = this.$.spinner;
+
+          firebase.database().ref('/projects').on('child_added', e => {
+              e.forEach(t => {
+                  const i = document.createElement('paper-item');
+                  i.appendChild(document.createTextNode(t.val()))
+                  const b = document.createElement('iron-icon');
+                  b.setAttribute("icon", "icons:delete")
+                  b.setAttribute("id", t.key)
+                  i.appendChild(b);
+                  i.addEventListener('click', d => {
+                      console.log(d);
+                  });
+                  lstProjects.appendChild(i);
+
+              });
+              spinner.classList.add('hide');
+              console.log(e);
+          });
+
+          icoAdd.addEventListener('click', e => {
+              if (txtProjectName.validate()) {
+                  // A project entry.
+                  var projectData = {
+                      name: txtProjectName.value
+                  };
+                  // Get a key for a new project.
+                  var newProjectKey = firebase.database().ref().push().key;
+                  // Write the new project's data simultaneously.
+                  var updates = {};
+                  updates['/projects/' + newProjectKey] = projectData;
+                  const promise = firebase.database().ref().update(updates);
+                  promise
+                    //.then(e => { txtProjectName.value = ''; })
+                    .catch(e => { console.log(e); })
+                  txtProjectName.value = '';
+              };
+          });
+      }
+    });
+
+    </script>
+</dom-module>

@@ -1,0 +1,114 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-spinner/paper-spinner.html">
+
+<dom-module id="my-view6">
+
+    <template>
+
+        <style>
+            :host {
+                display: block;
+                padding: 10px;
+            }
+
+            .card {
+                box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+                padding: 16px;
+                margin: 24px;
+                border-radius: 5px;
+                background-color: #fff;
+                color: #757575;
+            }
+
+            .header {
+                display: inline-block;
+                height: 54px;
+                width: 64px;
+                border-radius: 3%;
+                line-height: 54px;
+                font-size: 30px;
+                color: #555;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 22px;
+                margin: 16px 0;
+                color: #212121;
+            }
+
+            .hide {
+                display: none;
+            }
+        </style>
+
+        <div class="card">
+            <div>Today, start my work with</div>
+            <div>
+                <paper-dropdown-menu label="Project" vertical-align="bottom" horizontal-align="left">
+                    <paper-listbox id="lstProjects" class="dropdown-content">
+                    </paper-listbox>
+                </paper-dropdown-menu>
+                <paper-button id="icoStart" raised>Start<iron-icon icon="icons:forward"></iron-icon></paper-button>
+                <paper-spinner id="spinner" active></paper-spinner>
+            </div>
+        </div>
+
+    </template>
+
+    <script>
+
+      Polymer({
+          is: 'my-view6',
+          ready: function () {
+              //Get elements
+              const lstProjects = this.$.lstProjects;
+              const icoStart = this.$.icoStart;
+              const spinner = this.$.spinner;
+
+              firebase.database().ref('/projects').on('child_added', e => {
+                  e.forEach(t => {
+                      const i = document.createElement('paper-item');
+                      i.appendChild(document.createTextNode(t.val()))
+                      lstProjects.appendChild(i);
+                  });
+                  spinner.classList.add('hide');
+                  console.log(e);
+              });
+
+              icoStart.addEventListener('click', e => {
+                  if (lstProjects.selectedItem) {
+                      // A teammember entry.
+                      var teammemberData = {
+                          member: firebase.auth().currentUser.email,
+                          project: lstProjects.selectedItem.textContent
+                      };
+                      // Get a key for a new team member.
+                      var newTeammembertKey = firebase.database().ref().push().key;
+                      // Write the new project's data simultaneously.
+                      var updates = {};
+                      var serverDate = new Date();
+                      updates['/teammembers/' + serverDate.getUTCDate() +'/' + newTeammembertKey] = teammemberData;
+                      const promise = firebase.database().ref().update(updates);
+                      promise
+                        //.then(e => { txtProjectName.value = ''; })
+                        .catch(e => { console.log(e); })
+                      icoStart.classList.remove('disabled')
+                  };
+              });
+          }
+      });
+
+
+
+    </script>
+    <!--<script src="scripts/app.js"></script>-->
+</dom-module>
